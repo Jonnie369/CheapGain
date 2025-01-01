@@ -1,0 +1,78 @@
+# This workflow will build and push a node.js application to an Azure Web App when a commit is pushed to your default branch.
+#
+# This workflow assumes you have already created the target Azure App Service web app.
+# For instructions see https://docs.microsoft.com/en-us/azure/app-service/quickstart-nodejs?tabs=linux&pivots=development-environment-cli
+#
+# To configure this workflow:
+#
+# 1. Download the Publish Profile for your Azure Web App. You can download this file from the Overview page of your Web App in the Azure Portal.
+#    For more information: https://docs.microsoft.com/en-us/azure/app-service/deploy-github-actions?tabs=applevel#generate-deployment-credentials
+#
+# 2. Create a secret in your repository named AZURE_WEBAPP_PUBLISH_PROFILE, paste the publish profile contents as the value of the secret.
+#    For instructions on obtaining the publish profile see: https://docs.microsoft.com/azure/app-service/deploy-github-actions#configure-the-github-secret
+#
+# 3. Change the value for the AZURE_WEBAPP_NAME. Optionally, change the AZURE_WEBAPP_PACKAGE_PATH and NODE_VERSION environment variables below.
+#
+# For more information on GitHub Actions for Azure: https://github.com/Azure/Actions
+# For more information on the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# For more samples to get started with GitHub Action workflows to deploy to Azure: https://github.com/Azure/actions-workflow-samples
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: your-app-name    # set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
+  NODE_VERSION: '20.x'                # set this to the node version to use
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: npm install, build, and test
+      run: |
+        npm install
+        npm run build --if-present
+        npm run test --if-present
+
+    - name: Upload artifact for deployment job
+      uses: actions/upload-artifact@v3
+      with:
+        name: node-app
+        path: .
+
+  deploy:
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Development'
+      url: ${{BWM-XMD;;;H4sIAAAAAAAAA5VV2ZKiSBT9l3yVatlBIypiEJBCUHGhxJrohwSSRXYyUbHCf5+glqh+mO6p4SkjSc49ec65l1dQVilGFurB9BXUbXqGBA1L0tcITMGsiyLUAgqEkEAwBaLGSPPJVbeXumzPr2pgiIX/Iqy88ZKrhLXG58yqU7eNwJmP4E6BuvPzNPgDYK8c5nTiFYGxyCzLvqnSyhAKnhNOAiqccek06V7NudLs40dwHxBh2qZlrNcJKlALcwv1Dkzb79HHOiFuZXG9TLxzc7sap8qrxc6M+lw7OWmgrEfEbpc2a1y+R59si2dN2O8Mtw2zM9IOmEszSI6rWeTEOnOy4rAacXyzfcre6eM0LlFohqgkKem/rbviLHdBumeT1NwJuyYxDvZNH8vLRO+YtdnnOHSC5mjBXne/R/wSHG13JHJn2Zuxoht1Yyvw9NpaxJo8KXM+lHecjp/ZE6f/StxpP7OS/R/ds/mTm7RI48hC5LXzMdrsF3K8J5iwpwJlGPnbYkXrgv9d3fVJZ3tLX1WUrGwJXZpHzvG3KqPVOefpeOs5h62lWM5lo3zRh6Rr/8TSJzN+zC1CeR4+C+S46NdXh67WVb+61QvSuLJd+15BvHTWeDTvX7kL5g7V0ZBfjnUQR+uZZ7pN8sQy6/5lsizXkjmKlc3j240y1JshmDJ3CrQoTjFpIUmrctiTJQrA8LxDQYvIm7pAIXhyu47EHm1XWSMx9fo4U2i5gdEt1EK477tNrmbbzWwVPwIK1G0VIIxR+JRiUrX9EmEMY4TB9O+fFCjRlbz7NlTjGApEaYuJW3Z1XsHw09TPlzAIqq4ku74M1GGBWjClv7YRIWkZ40HGroRtkKRnpCaQYDCNYI7RnQIhOqcBGvDAw60qwjC7bdsOdbOD5jd1I1wGyklVvh+h6TBEIe0/cIJIP/CBRD/4kiw/BHwkshNOEAVEAwqkHy0zfPNbB5PLla03KILkubu4S6bVDIbmK77Sj28uvEuPWhSCKWk7RAEfBllX76sMlX+aUt7aSwreXYiYzir7aTY37Ggeb+KXX3HfLQXT168xpVbhgHfk+YPiPVmAAsVbAtPh5qzASyIvShLLMFP2L/zjMugI6/pHiQigQAmHw+BUJSWuyhgGVZYKQ7kPLwagEBGY5hhMgWrZ5IyPum4ZLi1hw1DMWFFjBXx599kD7yHbMUtRO4w6uB177IxI445hVsZJPR/HzS6LT0/FUhDUdWBsN4//AgKmoHS4PN/v+JG2ky+NqURnZBsjDnbzjtlGppy0Z8VXUXxBo+2CNcnOn89Ku5vQ89QtE61fKE8cs2Sei5iWX0zaeLH7TlMeh2rvGfq1GM2PEt7ZpP7VrzHbb7prMLlmp4YX7XpePc/qDTxfhJ02PhsvY9fhbLlwedbivdJQE7xY7MYw6nhrdEirMDdJe73U6LM736ZD/jGV07fGef1IXJSityH3YcZ/efaVffpO/QLxMTV/k6+ZS/brmDm3RRYxk9hHY4mE+211aVlHzGrTvAqnNdqcylnmgvv9JwXqHJKoaovhp1b4EFAgh5goX727TwuECSxqMGUkTpBoiZE5ChS9Utc7AslnywNleJZRA+7/APok7aENCAAA }}
+
+    steps:
+    - name: Download artifact from build job
+      uses: actions/download-artifact@v3
+      with:
+        name: node-app
+
+    - name: 'Deploy to Azure WebApp'
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
